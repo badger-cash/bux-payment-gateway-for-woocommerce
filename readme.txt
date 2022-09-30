@@ -1,5 +1,5 @@
 === BUX.digital Payment Gateway for WooCommerce ===
-Contributors: CoinPayments, woothemes, mikejolley, jameskoster, CoenJacobs
+Contributors: vinarmani, CoinPayments, woothemes, mikejolley, jameskoster, CoenJacobs
 Tags: bitcoin, ecash, cryptocurrency, bux, woocommerce
 Requires at least: 3.7.0
 Tested up to: 6.0.2
