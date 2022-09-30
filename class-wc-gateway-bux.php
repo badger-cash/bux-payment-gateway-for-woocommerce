@@ -2,11 +2,11 @@
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
 /**
- * Plugin Name: WooCommerce BUX.digital Gateway
- * Plugin URI: https://bux.digital/
+ * Plugin Name: BUX.digital Gateway
+ * Plugin URI: https://github.com/badger-cash/bux-payment-gateway-for-woocommerce
  * Description:  Provides a BUX.digital Payment Gateway.
  * Author: BUX.digital
- * Author URI: https://bux.digital/
+ * Author URI: https://badger.cash/
  * Version: 1.0.0
  */
 
