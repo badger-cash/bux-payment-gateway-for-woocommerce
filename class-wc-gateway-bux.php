@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
  * Description:  Provides a BUX.digital Payment Gateway.
  * Author: BUX.digital
  * Author URI: https://badger.cash/
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 
 /**
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
  *
  * @class 		WC_BUX
  * @extends		WC_Gateway_BUX
- * @version		1.0.0
+ * @version		1.0.1
  * @package		WooCommerce/Classes/Payment
  * @author 		BUX.digital based on Coinpayments.net module
  */
@@ -58,7 +58,7 @@ function bux_gateway_load() {
 		global $woocommerce;
 
         $this->id           = 'bux';
-        $this->icon         = apply_filters( 'woocommerce_bux_icon', plugins_url().'/bux-payment-gateway-for-woocommerce/assets/images/icons/bux.png' );
+        $this->icon         = apply_filters( 'woocommerce_bux_icon', plugins_url('assets/images/icons/bux.png', __FILE__) );
         $this->has_fields   = false;
         $this->method_title = __( 'BUX.digital', 'woocommerce' );
         $this->ipn_url   = add_query_arg( 'wc-api', 'WC_Gateway_BUX', home_url( '/' ) );
@@ -221,7 +221,7 @@ function bux_gateway_load() {
 		// BUX.digital Args
 		$bux_args = array(
 				'cmd' 					=> '_pay_auto',
-				'merchant_name'			=> $this->title,
+				'merchant_name'			=> get_bloginfo('name'),
 				'merchant_addr' 		=> $this->merchant_addr,
 				'allow_extra' 				=> 0,
 				// Get the currency from the order, not the active currency
@@ -334,7 +334,7 @@ function bux_gateway_load() {
      * @return void
      */
 	function receipt_page( $order ) {
-		echo '<p>'.__( 'Thank you for your order, please click the button below to pay with BUX.', 'woocommerce' ).'</p>';
+		echo '<p>'.__( 'Thank you for your order, please click the button below to pay with BUX.digital Gateway.', 'woocommerce' ).'</p>';
 
 		echo $this->generate_bux_form( $order );
 	}
@@ -371,22 +371,23 @@ function bux_gateway_load() {
 						if ($_POST['amount1'] >= $order->get_total()) {
 							if (!empty( $_POST["payment_id"])) {
 								// Confirm Invoice is paid
-								$options = array(
-									'http'=>array(
-									'method'=>"GET",
-									'header'=>"Accept: application/payment-request\r\n" 
+								$pr_args = array(
+									'headers' => array(
+										'Accept' => 'application/payment-request'
 									)
 								);
-								
-								$context = stream_context_create($options);
-								$pr_data = file_get_contents("https://pay.badger.cash/i/" . $_POST["payment_id"], false, $context);
-								if ($pr_data !== FALSE) {
+								$pr_url = "https://pay.badger.cash/i/" . $_POST["payment_id"];
+								$pr_response = wp_remote_get($pr_url, $pr_args);
+								$pr_data     = wp_remote_retrieve_body($pr_response);
+								$http_code = wp_remote_retrieve_response_code($pr_response);
+								if ($http_code == 200) {
 									$pr_obj = json_decode($pr_data);
 									if (!empty($pr_obj->txHash) && !empty($pr_obj->callback)) {
 										if ($pr_obj->callback->ipn_body->custom == $order->get_order_key()) {
 											// Check to make sure proper amount was paid in transaction
-											$tx_data = file_get_contents("https://ecash.badger.cash:8332/tx/" . $pr_obj->txHash . "?slp=true");
-
+											$tx_url = "https://ecash.badger.cash:8332/tx/" . $pr_obj->txHash . "?slp=true";
+											$tx_response = wp_remote_get($tx_url);
+											$tx_data     = wp_remote_retrieve_body($tx_response);
 											$tx_obj = json_decode($tx_data);
 											// Hard coding tokenId
 											$bux_token_id = "7e7dacd72dcdb14e00a03dd3aff47f019ed51a6f1f4e4f532ae50692f62bc4e5";
@@ -395,11 +396,9 @@ function bux_gateway_load() {
 												$total_value = 0;
 												$prefix_array = array("etoken:", "ecash:");
 												$etoken_substr = substr(str_replace($prefix_array, "", $this->merchant_addr), 0, -10);
-												echo $etoken_substr;
 												for ($i = 0; $i < count($tx_obj->outputs); $i++) {
 													$output = $tx_obj->outputs[$i];
 													$output_substr = $etoken_substr = substr(str_replace($prefix_array, "", $output->address), 0, -10);
-													echo $output_substr;
 													if ($output_substr != $etoken_substr) {
 														continue;
 													}
@@ -415,10 +414,10 @@ function bux_gateway_load() {
 													print "IPN check OK\n";
 													return true;
 												} else {
-													$error_msg = "Insufficient amount paid in TXID" . $pr_obj->txHash;
+													$error_msg = "Insufficient amount paid in TXID" . sanitize_text_field($pr_obj->txHash);
 												}
 											} else {
-												$error_msg = "TXID" . $pr_obj->txHash . " is not a valid BUX transaction";
+												$error_msg = "TXID" . sanitize_text_field($pr_obj->txHash) . " is not a valid BUX transaction";
 											}
 										} else {
 											$error_msg = "Invalid order key";
@@ -427,7 +426,7 @@ function bux_gateway_load() {
 										$error_msg = "Payment request missing required properties or is not paid!";
 									}
 								} else {
-									$error_msg = "Invalid payment id or payment request expired!";
+									$error_msg = "Invalid payment id or payment request expired! ";
 								}
 							} else {
 								$error_msg = "No payment request id provided!";
@@ -442,7 +441,7 @@ function bux_gateway_load() {
 					$error_msg = "Merchant ID doesn't match!";
 				}
 			} else {
-				$error_msg = "Could not find order info for order: ".$_POST['invoice'];
+				$error_msg = "Could not find order info for order id provided!";
 			}
 		}
 
@@ -450,7 +449,7 @@ function bux_gateway_load() {
 
 		$report .= "POST Fields\n\n";
 		foreach ($_POST as $key => $value) {
-			$report .= $key.'='.$value."\n";
+			$report .= sanitize_text_field($key).'='.sanitize_text_field($value)."\n";
 		}
 
 		if ($order) {
@@ -481,10 +480,12 @@ function bux_gateway_load() {
 			    	die("IPN Error: Could not find order info for order: ".$_POST['invoice']);
 			    }
 
-        	$this->log->add( 'bux', 'Order #'.$order->get_id().' payment status: ' . $posted['status_text'] );
-         	$order->add_order_note('BUX.digital Payment Status: '.$posted['status_text']);
+			$sanitized_status = sanitize_text_field($posted['status_text']);
 
-         	if ( $order->get_status() != 'completed' && get_post_meta( $order->get_id(), 'BUX payment complete', true ) != 'Yes' ) {
+        	$this->log->add( 'bux', 'Order #'.$order->get_id().' payment status: ' . $sanitized_status );
+         	$order->add_order_note('BUX.digital Payment Status: '.$sanitized_status );
+
+         	if ( $order->get_status() != 'completed' && get_post_meta( $order->get_id(), 'BUX.digital payment complete', true ) != 'Yes' ) {
          		// no need to update status if it's already done
             if ( ! empty( $posted['txn_id'] ) )
              	update_post_meta( $order->get_id(), 'Transaction ID', $posted['txn_id'] );
@@ -501,11 +502,11 @@ function bux_gateway_load() {
              	$order->payment_complete();
 						} else if ($posted['status'] < 0) {
 							print "Marking cancelled\n";
-              $order->update_status('cancelled', 'BUX Payment cancelled/timed out: '.$posted['status_text']);
-							mail( get_option( 'admin_email' ), sprintf( __( 'Payment for order %s cancelled/timed out', 'woocommerce' ), $order->get_order_number() ), $posted['status_text'] );
+              $order->update_status('cancelled', 'BUX Payment cancelled/timed out: '. $sanitized_status );
+							mail( get_option( 'admin_email' ), sprintf( __( 'Payment for order %s cancelled/timed out', 'woocommerce' ), $order->get_order_number() ), $sanitized_status );
             } else {
 							print "Marking pending\n";
-							$order->update_status('pending', 'BUX Payment pending: '.$posted['status_text']);
+							$order->update_status('pending', 'BUX Payment pending: '. $sanitized_status );
 						}
 	        }
 	        die("IPN OK");

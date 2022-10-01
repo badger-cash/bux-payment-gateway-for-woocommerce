@@ -23,5 +23,8 @@ This plugin implements a payment gateway for WooCommerce to let buyers pay with 
 
 == Changelog ==
 
+= 1.0.1 =
+* Fixes for compatibility with Wordpress plugin directory.
+
 = 1.0.0 =
 * Initial release.
