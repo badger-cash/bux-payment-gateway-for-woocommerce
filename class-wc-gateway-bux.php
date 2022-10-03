@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
  * Description:  Provides a BUX.digital Payment Gateway.
  * Author: BUX.digital
  * Author URI: https://badger.cash/
- * Version: 1.0.1
+ * Version: 1.0.2
  */
 
 /**
@@ -376,7 +376,7 @@ function bux_gateway_load() {
 										'Accept' => 'application/payment-request'
 									)
 								);
-								$pr_url = "https://pay.badger.cash/i/" . $_POST["payment_id"];
+								$pr_url = "https://pay.badger.cash/i/" . sanitize_text_field($_POST["payment_id"]);
 								$pr_response = wp_remote_get($pr_url, $pr_args);
 								$pr_data     = wp_remote_retrieve_body($pr_response);
 								$http_code = wp_remote_retrieve_response_code($pr_response);
@@ -385,7 +385,7 @@ function bux_gateway_load() {
 									if (!empty($pr_obj->txHash) && !empty($pr_obj->callback)) {
 										if ($pr_obj->callback->ipn_body->custom == $order->get_order_key()) {
 											// Check to make sure proper amount was paid in transaction
-											$tx_url = "https://ecash.badger.cash:8332/tx/" . $pr_obj->txHash . "?slp=true";
+											$tx_url = "https://ecash.badger.cash:8332/tx/" . sanitize_text_field($pr_obj->txHash) . "?slp=true";
 											$tx_response = wp_remote_get($tx_url);
 											$tx_data     = wp_remote_retrieve_body($tx_response);
 											$tx_obj = json_decode($tx_data);
@@ -477,7 +477,7 @@ function bux_gateway_load() {
 	    if (!empty($_POST['invoice']) && !empty($_POST['custom'])) {
 			    $order = $this->get_bux_order( $posted );
 			    if ($order === FALSE) {
-			    	die("IPN Error: Could not find order info for order: ".$_POST['invoice']);
+			    	die("IPN Error: Could not find order info for order: ".sanitize_text_field($_POST['invoice']) );
 			    }
 
 			$sanitized_status = sanitize_text_field($posted['status_text']);

@@ -3,7 +3,7 @@ Contributors: vinarmani, CoinPayments, woothemes, mikejolley, jameskoster, CoenJ
 Tags: bitcoin, ecash, cryptocurrency, bux, woocommerce
 Requires at least: 3.7.0
 Tested up to: 6.0.2
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ This plugin implements a payment gateway for WooCommerce to let buyers pay with 
 1. Click "Save changes" and the gateway will be active.
 
 == Changelog ==
+
+= 1.0.2 =
+* Additional fixes for compatibility with Wordpress plugin directory.
 
 = 1.0.1 =
 * Fixes for compatibility with Wordpress plugin directory.
