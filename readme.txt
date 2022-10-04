@@ -11,7 +11,7 @@ This plugin implements a payment gateway for WooCommerce to let buyers pay with 
 
 == Description ==
 
-This plugin implements a payment gateway for WooCommerce to let buyers pay with pay with BUX tokens on eCash, via PayPal or Credit Card.
+This plugin implements a payment gateway for WooCommerce to let buyers pay with BUX tokens on eCash, via PayPal or Credit Card.
 
 == Installation ==
 
